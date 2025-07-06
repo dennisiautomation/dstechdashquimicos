@@ -1,4 +1,4 @@
-/* CSS Responsivo Moderno para Dashboard Industrial */
+/* CSS Responsivo Otimizado para Dashboard Industrial */
 
 /* Reset e Base */
 * {
@@ -19,7 +19,7 @@ body {
 .main-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 15px;
+    padding: 0 10px;
 }
 
 /* Header Responsivo */
@@ -27,27 +27,33 @@ body {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 15px;
-    margin: 20px 0;
-    padding: 20px;
+    margin: 15px 0;
+    padding: 15px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .header-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
     align-items: center;
     justify-content: space-between;
 }
 
-/* Cards Modernos */
-.metric-card {
+/* Cards e Gráficos - RESPONSIVO OTIMIZADO */
+.metric-card, 
+.graph-container,
+[id*="graph"],
+[id*="chart"],
+.plotly-graph-div {
     background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    padding: 25px;
-    margin: 15px 0;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 10px 0;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    width: 100% !important;
+    max-width: 100% !important;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -118,13 +124,34 @@ body {
     backdrop-filter: blur(10px);
 }
 
-/* Gráficos Responsivos */
-.chart-container {
+/* Gráficos Responsivos - OTIMIZADO */
+.chart-container,
+.graph-container,
+[id*="graph"],
+[id*="chart"],
+.plotly-graph-div {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
-    padding: 25px;
-    margin: 20px 0;
+    padding: 20px;
+    margin: 15px 0;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto;
+}
+
+/* Força gráficos a ocuparem toda a largura */
+.js-plotly-plot {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Container de gráficos em grid responsivo */
+.graphs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
 }
 
 .chart-title {
@@ -179,49 +206,83 @@ body {
     color: #bdc3c7;
 }
 
-/* Responsividade Mobile */
+/* RESPONSIVIDADE OTIMIZADA - MOBILE FIRST */
+
+/* Tablets e telas médias */
+@media (max-width: 1024px) {
+    .graphs-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px;
+    }
+    
+    .chart-container,
+    .graph-container,
+    [id*="graph"],
+    [id*="chart"],
+    .plotly-graph-div {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 10px 0 !important;
+        padding: 15px !important;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+}
+
+/* Mobile - Força 1 coluna para TUDO */
 @media (max-width: 768px) {
     .main-container {
-        padding: 0 10px;
+        padding: 0 5px !important;
     }
     
     .header-section {
-        margin: 10px 0;
-        padding: 15px;
+        margin: 5px 0;
+        padding: 10px;
         border-radius: 10px;
     }
     
     .header-controls {
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
     }
     
-    .metrics-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
-        margin: 20px 0;
+    /* FORÇA TODOS OS GRÁFICOS EM 1 COLUNA */
+    .metrics-grid,
+    .graphs-grid,
+    .tab-content,
+    [class*="grid"],
+    [class*="row"] {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 10px !important;
     }
     
-    .metric-card {
-        padding: 20px;
-        margin: 10px 0;
-        border-radius: 15px;
+    .metric-card,
+    .chart-container,
+    .graph-container,
+    [id*="graph"],
+    [id*="chart"],
+    .plotly-graph-div {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 8px 0 !important;
+        padding: 12px !important;
+        border-radius: 12px;
+        flex: none !important;
     }
     
     .metric-value {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
     
     .tab-button {
-        min-width: 100px;
-        padding: 12px 15px;
-        font-size: 0.9rem;
-    }
-    
-    .chart-container {
-        padding: 15px;
-        margin: 15px 0;
-        border-radius: 10px;
+        min-width: 80px;
+        padding: 10px 12px;
+        font-size: 0.85rem;
     }
     
     .chart-title {
@@ -230,9 +291,43 @@ body {
     }
 }
 
+/* REGRAS ESPECÍFICAS PARA DASH/PLOTLY */
+
+/* Força containers Dash a serem responsivos */
+._dash-undo-redo,
+.dash-table-container,
+.Select-control,
+.dash-dropdown {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Plotly gráficos responsivos */
+.plotly .main-svg {
+    width: 100% !important;
+    height: auto !important;
+}
+
+.modebar {
+    right: 10px !important;
+    top: 10px !important;
+}
+
+/* Dash Bootstrap Components */
+.row {
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+.col, .col-* {
+    padding: 5px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
 @media (max-width: 480px) {
     .header-section {
-        padding: 10px;
+        padding: 8px;
     }
     
     .metric-card {
