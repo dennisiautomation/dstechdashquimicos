@@ -1066,7 +1066,22 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
         ], width=12)
     ])
     
-    return html.Div([header_section, kpi_cards, charts_row, charts_row2])
+    # Seção do Dashboard Executivo Completo
+    executive_dashboard_row = dbc.Row([
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    dcc.Graph(
+                        id='executive-dashboard-chart',
+                        figure=create_executive_dashboard_chart(start_date, end_date),
+                        className='responsive-graph'
+                    )
+                ])
+            ], className="shadow-sm")
+        ], width=12)
+    ], className="mb-4")
+    
+    return html.Div([header_section, kpi_cards, charts_row, charts_row2, executive_dashboard_row])
 
 def create_alarmes_tab(start_date, end_date):
     """Aba de monitoramento de alarmes - RESPONSIVA"""
@@ -1298,6 +1313,203 @@ def create_producao_tab(start_date, end_date):
             ], width=12)
         ])
     ])
+
+def create_executive_dashboard_chart(start_date, end_date):
+    """Cria gráfico executivo completo cruzando todos os KPIs principais"""
+    from plotly.subplots import make_subplots
+    import plotly.graph_objects as go
+    
+    # Converter strings para datetime se necessário
+    if isinstance(start_date, str):
+        start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+    if isinstance(end_date, str):
+        end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+    
+    # Gerar dados simulados para o período
+    days = (end_date - start_date).days + 1
+    dates = [start_date + timedelta(days=i) for i in range(days)]
+    
+    # Dados simulados realistas
+    kg_roupas = [1200 + (i * 50) + (i % 3 * 100) for i in range(days)]
+    agua_litros = [kg * 3.2 + (i % 2 * 200) for i, kg in enumerate(kg_roupas)]
+    quimicos_kg = [kg * 0.004 + (i % 4 * 0.1) for i, kg in enumerate(kg_roupas)]
+    eficiencia = [92 + (i % 5 * 2) - (i % 7 * 1) for i in range(days)]
+    alarmes = [max(0, 5 - (i % 6)) for i in range(days)]
+    
+    # Criar subplots com eixos secundários
+    fig = make_subplots(
+        rows=2, cols=2,
+        specs=[
+            [{'secondary_y': True}, {'secondary_y': True}],
+            [{'secondary_y': True}, {'type': 'indicator'}]
+        ],
+        vertical_spacing=0.18,
+        horizontal_spacing=0.15
+    )
+    
+    # Gráfico 1: Produção vs Eficiência
+    fig.add_trace(
+        go.Scatter(
+            x=dates, y=kg_roupas,
+            name='Kg Roupas',
+            line=dict(color='#2E86AB', width=3),
+            fill='tonexty'
+        ),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=dates, y=eficiencia,
+            name='Eficiência (%)',
+            line=dict(color='#A23B72', width=2, dash='dot'),
+            yaxis='y2'
+        ),
+        row=1, col=1, secondary_y=True
+    )
+    
+    # Gráfico 2: Água vs Químicos
+    fig.add_trace(
+        go.Bar(
+            x=dates, y=agua_litros,
+            name='Água (L)',
+            marker_color='#F18F01',
+            opacity=0.7
+        ),
+        row=1, col=2
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=dates, y=quimicos_kg,
+            name='Químicos (kg)',
+            line=dict(color='#C73E1D', width=3),
+            mode='lines+markers',
+            yaxis='y4'
+        ),
+        row=1, col=2, secondary_y=True
+    )
+    
+    # Gráfico 3: Alarmes vs Produção
+    fig.add_trace(
+        go.Scatter(
+            x=dates, y=alarmes,
+            name='Alarmes',
+            line=dict(color='#E74C3C', width=2),
+            fill='tozeroy',
+            fillcolor='rgba(231, 76, 60, 0.2)'
+        ),
+        row=2, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=dates, y=[kg/50 for kg in kg_roupas],  # Escalar para visualização
+            name='Produção (x50)',
+            line=dict(color='#27AE60', width=2, dash='dash'),
+            yaxis='y6'
+        ),
+        row=2, col=1, secondary_y=True
+    )
+    
+    # Gráfico 4: Indicadores Consolidados
+    total_kg = sum(kg_roupas)
+    total_agua = sum(agua_litros)
+    total_quimicos = sum(quimicos_kg)
+    media_eficiencia = sum(eficiencia) / len(eficiencia)
+    total_alarmes = sum(alarmes)
+    
+    fig.add_trace(
+        go.Indicator(
+            mode = "gauge+number+delta",
+            value = media_eficiencia,
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            title = {'text': "Eficiência Média (%)"},
+            delta = {'reference': 90},
+            gauge = {
+                'axis': {'range': [None, 100]},
+                'bar': {'color': "#2E86AB"},
+                'steps': [
+                    {'range': [0, 70], 'color': "#FFE5E5"},
+                    {'range': [70, 85], 'color': "#FFF3CD"},
+                    {'range': [85, 100], 'color': "#D4EDDA"}
+                ],
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 95
+                }
+            }
+        ),
+        row=2, col=2
+    )
+    
+    # Configurar layout responsivo
+    fig.update_layout(
+        height=700,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=10)
+        ),
+        margin=dict(t=60, b=40, l=40, r=40),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        # Responsividade
+        autosize=True,
+        font=dict(size=11),
+        # Ajustar espaçamento dos títulos dos subplots
+        annotations=[
+            dict(
+                text="Produção vs Eficiência",
+                x=0.225, y=0.95,
+                xref='paper', yref='paper',
+                showarrow=False,
+                font=dict(size=12, color='#2C3E50')
+            ),
+            dict(
+                text="Consumo de Água vs Químicos",
+                x=0.775, y=0.95,
+                xref='paper', yref='paper',
+                showarrow=False,
+                font=dict(size=12, color='#2C3E50')
+            ),
+            dict(
+                text="Alarmes vs Produção",
+                x=0.225, y=0.45,
+                xref='paper', yref='paper',
+                showarrow=False,
+                font=dict(size=12, color='#2C3E50')
+            ),
+            dict(
+                text="Indicadores Consolidados",
+                x=0.775, y=0.45,
+                xref='paper', yref='paper',
+                showarrow=False,
+                font=dict(size=12, color='#2C3E50')
+            )
+        ]
+    )
+    
+    # Configurar eixos
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.2)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.2)')
+    
+    # Adicionar anotações com totais
+    fig.add_annotation(
+        text=f"📦 Total: {total_kg:,.0f} kg<br>💧 Água: {total_agua:,.0f} L<br>🧪 Químicos: {total_quimicos:.1f} kg<br>🚨 Alarmes: {total_alarmes}",
+        xref="paper", yref="paper",
+        x=0.02, y=0.98,
+        showarrow=False,
+        align="left",
+        bgcolor="rgba(255,255,255,0.8)",
+        bordercolor="#2C3E50",
+        borderwidth=1,
+        font=dict(size=12, color="#2C3E50")
+    )
+    
+    return fig
 
 def create_relatorios_tab(start_date, end_date):
     """Aba de relatórios executivos - RESPONSIVA e DINÂMICA"""
@@ -1647,7 +1859,37 @@ def update_reports_on_period_change(period_days, refresh_clicks, active_tab, sta
         return create_relatorios_tab(start_dt.isoformat(), end_dt.isoformat())
     
     # Se não for a aba de relatórios, não fazer nada
-    raise PreventUpdate
+    return PreventUpdate
+
+# Callback para atualizar gráfico executivo quando datas mudarem
+@app.callback(
+    Output('executive-dashboard-chart', 'figure'),
+    [Input('date-picker', 'start_date'),
+     Input('date-picker', 'end_date'),
+     Input('refresh-button', 'n_clicks'),
+     Input('interval-component', 'n_intervals')]
+)
+def update_executive_dashboard_chart(start_date, end_date, n_clicks, n_intervals):
+    """Atualiza o gráfico executivo quando as datas mudarem"""
+    try:
+        print(f"📈 ATUALIZANDO GRÁFICO EXECUTIVO! start_date={start_date}, end_date={end_date}")
+        
+        # Converter strings para datetime se necessário
+        if isinstance(start_date, str):
+            start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+        if isinstance(end_date, str):
+            end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        
+        return create_executive_dashboard_chart(start_date, end_date)
+    except Exception as e:
+        print(f"❌ ERRO NO GRÁFICO EXECUTIVO: {str(e)}")
+        # Retornar gráfico vazio em caso de erro
+        import plotly.graph_objects as go
+        return go.Figure().add_annotation(
+            text="Erro ao carregar gráfico executivo",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False
+        )
 
 if __name__ == '__main__':
     port = int(os.getenv('DASH_PORT', 8051))

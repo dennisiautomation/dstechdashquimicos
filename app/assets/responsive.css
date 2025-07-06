@@ -347,12 +347,25 @@ body {
 /* CLASSES PARA GRÁFICOS RESPONSIVOS */
 .responsive-graph {
     width: 100% !important;
-    height: 400px;
+    height: 400px !important;
 }
 
 .responsive-graph-small {
     width: 100% !important;
-    height: 250px;
+    height: 300px !important;
+}
+
+/* Gráfico executivo - altura maior para 4 subplots */
+#executive-dashboard-chart {
+    width: 100% !important;
+    height: 700px !important;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 1200px) {
+    #executive-dashboard-chart {
+        height: 600px !important;
+    }
 }
 
 @media (max-width: 768px) {
@@ -361,17 +374,52 @@ body {
     }
     
     .responsive-graph-small {
-        height: 200px !important;
+        height: 250px !important;
+    }
+    
+    #executive-dashboard-chart {
+        height: 500px !important;
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
     .responsive-graph {
         height: 250px !important;
     }
     
     .responsive-graph-small {
-        height: 180px !important;
+        height: 200px !important;
+    }
+    
+    #executive-dashboard-chart {
+        height: 400px !important;
+    }
+}
+
+/* Forçar SVGs dos gráficos a serem responsíveis */
+.js-plotly-plot .plotly svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Container dos gráficos */
+.js-plotly-plot {
+    width: 100% !important;
+}
+
+/* Tabelas responsíveis */
+.table-responsive {
+    overflow-x: auto !important;
+}
+
+/* Ajustar fontes em telas pequenas */
+@media (max-width: 768px) {
+    #executive-dashboard-chart .plotly .annotation {
+        font-size: 10px !important;
+    }
+    
+    #executive-dashboard-chart .plotly .legend {
+        font-size: 9px !important;
     }
 }
 
