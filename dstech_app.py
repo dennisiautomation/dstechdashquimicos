@@ -6,6 +6,7 @@ Sistema completo de monitoramento industrial com dados reais
 
 import dash
 from dash import dcc, html, Input, Output, State, callback_context, dash_table
+from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import plotly.express as px
@@ -117,6 +118,12 @@ def generate_executive_report(start_date=None, end_date=None):
         start_date = datetime.now() - timedelta(days=7)
     if end_date is None:
         end_date = datetime.now()
+    
+    # Converter strings para datetime se necessário
+    if isinstance(start_date, str):
+        start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+    if isinstance(end_date, str):
+        end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
     
     # Calcular diferença de dias
     days_diff = (end_date - start_date).days + 1
@@ -370,18 +377,36 @@ def update_timestamp(n):
                Input('refresh-button', 'n_clicks'),
                Input('interval-component', 'n_intervals')])
 def render_tab_content(active_tab, start_date, end_date, refresh_clicks, n_intervals):
-    
-    if active_tab == "resumo":
-        return create_resumo_tab(start_date, end_date)
-    elif active_tab == "tendencias":
-        return create_tendencias_tab(start_date, end_date)
-    elif active_tab == "alarmes":
-        return create_alarmes_tab(start_date, end_date)
-    elif active_tab == "producao":
-        return create_producao_tab(start_date, end_date)
-    elif active_tab == "relatorios":
-        return create_relatorios_tab(start_date, end_date)
-    elif active_tab == "config":
+    try:
+        print(f"🔄 CALLBACK TAB EXECUTADO! active_tab={active_tab}, start_date={start_date}, end_date={end_date}")
+        
+        # Valores padrão se None
+        if start_date is None:
+            start_date = (datetime.now() - timedelta(days=7)).isoformat()
+        if end_date is None:
+            end_date = datetime.now().isoformat()
+            
+        if active_tab == "resumo":
+            return create_resumo_tab(start_date, end_date)
+        elif active_tab == "tendencias":
+            return create_tendencias_tab(start_date, end_date)
+        elif active_tab == "alarmes":
+            return create_alarmes_tab(start_date, end_date)
+        elif active_tab == "producao":
+            return create_producao_tab(start_date, end_date)
+        elif active_tab == "relatorios":
+            return create_relatorios_tab(start_date, end_date)
+    except Exception as e:
+        print(f"❌ ERRO NO CALLBACK TAB: {str(e)}")
+        return html.Div([
+            dbc.Alert([
+                html.H4("⚠️ Erro ao Carregar Conteúdo", className="alert-heading"),
+                html.P(f"Erro: {str(e)}"),
+                html.P("Tente atualizar a página ou selecionar outra aba.")
+            ], color="danger")
+        ])
+        
+    if active_tab == "config":
         return create_config_tab()
     
     return html.Div("Selecione uma aba")
@@ -656,9 +681,11 @@ def update_kpis(start_date, end_date):
 @app.callback(Output('download-report', 'data'),
               [Input('export-report-btn', 'n_clicks')],
               [State('export-format-dropdown', 'value'),
-               State('report-period-dropdown', 'value')],
+               State('report-period-dropdown', 'value'),
+               State('date-picker', 'start_date'),
+               State('date-picker', 'end_date')],
               prevent_initial_call=True)
-def export_report(n_clicks, export_format, period_days):
+def export_report(n_clicks, export_format, period_days, start_date, end_date):
     if n_clicks:
         import json
         import pandas as pd
@@ -666,9 +693,15 @@ def export_report(n_clicks, export_format, period_days):
         import io
         import base64
         
-        # Gerar relatório com período específico
-        start_dt = datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=7)
-        end_dt = datetime.fromisoformat(end_date) if end_date else datetime.now()
+        # Determinar período baseado na seleção
+        if period_days == 'custom':
+            # Usar datas do date-picker
+            start_dt = datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=7)
+            end_dt = datetime.fromisoformat(end_date) if end_date else datetime.now()
+        else:
+            # Usar período selecionado
+            end_dt = datetime.now()
+            start_dt = end_dt - timedelta(days=period_days)
         report = generate_executive_report(start_dt, end_dt)
         chemical_details = get_chemical_details()
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -803,23 +836,23 @@ Período: Últimos {period_days} dias
                 <div class='header'>
                     <h1>🏢 RELATÓRIO EXECUTIVO - DSTECH LAVANDERIA</h1>
                     <p><strong>Gerado em:</strong> {report['timestamp']}</p>
-                    <p><strong>Período de Análise:</strong> Últimos {period_days} dias</p>
+                    <p><strong>Período de Análise:</strong> {start_dt.strftime('%d/%m/%Y')} a {end_dt.strftime('%d/%m/%Y')}</p>
                 </div>
                 
                 <div class='section'>
                     <h2>🏢 RESUMO DE PRODUÇÃO</h2>
                     <div class='metrics'>
                         <div class='metric'>
-                            <div class='metric-value'>{report['production_summary']['daily_production']}</div>
-                            <div class='metric-label'>kg Produzidos Hoje</div>
+                            <div class='metric-value'>{report['production_summary']['period_production']}</div>
+                            <div class='metric-label'>kg Produzidos no Período</div>
                         </div>
                         <div class='metric'>
-                            <div class='metric-value'>{report['production_summary']['daily_cycles']}</div>
-                            <div class='metric-label'>Ciclos Hoje</div>
+                            <div class='metric-value'>{report['production_summary']['period_cycles']}</div>
+                            <div class='metric-label'>Ciclos no Período</div>
                         </div>
                         <div class='metric'>
-                            <div class='metric-value'>{report['production_summary']['weekly_production']}</div>
-                            <div class='metric-label'>kg Esta Semana</div>
+                            <div class='metric-value'>{report['production_summary']['daily_avg']}</div>
+                            <div class='metric-label'>Média Diária (kg)</div>
                         </div>
                         <div class='metric'>
                             <div class='metric-value'>{report['production_summary']['efficiency']}</div>
@@ -831,8 +864,8 @@ Período: Últimos {period_days} dias
                 <div class='section'>
                     <h2>💧 RESUMO DE CONSUMOS</h2>
                     <ul>
-                        <li><strong>Água Hoje:</strong> {report['consumption_summary']['water_today']} L ({report['consumption_summary']['water_per_kg']})</li>
-                        <li><strong>Químicos Hoje:</strong> {report['consumption_summary']['chemicals_today']} ({report['consumption_summary']['chemicals_per_kg']})</li>
+                        <li><strong>Água no Período:</strong> {report['consumption_summary']['water_period']} L ({report['consumption_summary']['water_per_kg']})</li>
+                        <li><strong>Químicos no Período:</strong> {report['consumption_summary']['chemicals_period']} ({report['consumption_summary']['chemicals_per_kg']})</li>
                     </ul>
                 </div>
                 
@@ -846,8 +879,8 @@ Período: Últimos {period_days} dias
                             <div class='metric-label'>Alarmes Ativos</div>
                         </div>
                         <div class='metric'>
-                            <div class='metric-value'>{report['alarms_summary']['total_month']}</div>
-                            <div class='metric-label'>Total do Mês</div>
+                            <div class='metric-value'>{report['alarms_summary']['period_alarms']}</div>
+                            <div class='metric-label'>Alarmes no Período</div>
                         </div>
                         <div class='metric'>
                             <div class='metric-value'>{report['alarms_summary']['critical_high']}</div>
@@ -1003,7 +1036,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                     html.H5("⚡ Eficiência Operacional", className="mb-0")
                 ]),
                 dbc.CardBody([
-                    dcc.Graph(id='efficiency-chart', figure=create_efficiency_chart(), style={'height': '400px'})
+                    dcc.Graph(id='efficiency-chart', figure=create_efficiency_chart(), className='responsive-graph')
                 ])
             ])
         ], xs=12, sm=12, md=12, lg=6, xl=6),  # Responsivo: mobile=1col, desktop=2col
@@ -1013,7 +1046,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                     html.H5("💧 Consumo de Água por Kg", className="mb-0")
                 ]),
                 dbc.CardBody([
-                    dcc.Graph(id='water-chart', figure=create_water_consumption_chart(), style={'height': '400px'})
+                    dcc.Graph(id='water-chart', figure=create_water_consumption_chart(), className='responsive-graph')
                 ])
             ])
         ], xs=12, sm=12, md=12, lg=6, xl=6)  # Responsivo: mobile=1col, desktop=2col
@@ -1027,7 +1060,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                     html.H5("🧪 Consumo de Químicos por Kg", className="mb-0")
                 ]),
                 dbc.CardBody([
-                    dcc.Graph(id='chemical-chart', figure=create_chemical_consumption_chart(), style={'height': '400px'})
+                    dcc.Graph(id='chemical-chart', figure=create_chemical_consumption_chart(), className='responsive-graph')
                 ])
             ])
         ], width=12)
@@ -1045,7 +1078,7 @@ def create_alarmes_tab(start_date, end_date):
                         html.H5("🔝 Top 10 Alarmes", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(id='top-alarms-chart', figure=create_top_alarms_chart(), style={'height': '400px'})
+                        dcc.Graph(id='top-alarms-chart', figure=create_top_alarms_chart(), className='responsive-graph')
                     ])
                 ])
             ], xs=12, sm=12, md=12, lg=6, xl=6, className="mb-3 mb-lg-0"),
@@ -1067,7 +1100,7 @@ def create_alarmes_tab(start_date, end_date):
                         html.H5("📊 Análise por Área", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(id='alarm-analysis-chart', figure=create_alarm_analysis_chart(), style={'height': '400px'})
+                        dcc.Graph(id='alarm-analysis-chart', figure=create_alarm_analysis_chart(), className='responsive-graph')
                     ])
                 ])
             ], xs=12, sm=12, md=12, lg=12, xl=12)
@@ -1084,7 +1117,7 @@ def create_tendencias_tab(start_date, end_date):
                         html.H5("🌡️ Temperatura", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(figure=create_temperature_trend_chart(start_date, end_date), style={'height': '400px'})
+                        dcc.Graph(figure=create_temperature_trend_chart(start_date, end_date), className='responsive-graph')
                     ])
                 ])
             ], xs=12, sm=12, md=12, lg=12, xl=12)
@@ -1096,7 +1129,7 @@ def create_tendencias_tab(start_date, end_date):
                         html.H5("📊 Sensores Completo", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(figure=create_sensors_trend_chart(start_date, end_date), style={'height': '500px'})
+                        dcc.Graph(figure=create_sensors_trend_chart(start_date, end_date), className='responsive-graph')
                     ])
                 ])
             ], xs=12, sm=12, md=12, lg=12, xl=12)
@@ -1269,6 +1302,12 @@ def create_producao_tab(start_date, end_date):
 def create_relatorios_tab(start_date, end_date):
     """Aba de relatórios executivos - RESPONSIVA e DINÂMICA"""
     
+    # Converter strings para datetime se necessário
+    if isinstance(start_date, str):
+        start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+    if isinstance(end_date, str):
+        end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+    
     # Gerar relatório executivo com período dinâmico
     report = generate_executive_report(start_date, end_date)
     
@@ -1317,6 +1356,23 @@ def create_relatorios_tab(start_date, end_date):
                             html.Div([
                                 dbc.Row([
                                     dbc.Col([
+                                        html.Label("Período:", className="form-label mb-2"),
+                                        dcc.Dropdown(
+                                            id='report-period-dropdown',
+                                            options=[
+                                                {'label': '📅 Últimos 7 dias', 'value': 7},
+                                                {'label': '📅 Últimos 15 dias', 'value': 15},
+                                                {'label': '📅 Últimos 30 dias', 'value': 30},
+                                                {'label': '📅 Últimos 60 dias', 'value': 60},
+                                                {'label': '📅 Últimos 90 dias', 'value': 90},
+                                                {'label': '📅 Personalizado (usar datas)', 'value': 'custom'}
+                                            ],
+                                            value=7,
+                                            clearable=False,
+                                            className="mb-3"
+                                        )
+                                    ], xs=12, sm=4, md=4, lg=4, xl=4, className="mb-3 mb-sm-0"),
+                                    dbc.Col([
                                         html.Label("Formato:", className="form-label mb-2"),
                                         dcc.Dropdown(
                                             id='export-format-dropdown',
@@ -1329,7 +1385,7 @@ def create_relatorios_tab(start_date, end_date):
                                             clearable=False,
                                             className="mb-3"
                                         )
-                                    ], xs=12, sm=6, md=6, lg=6, xl=6, className="mb-3 mb-sm-0"),
+                                    ], xs=12, sm=4, md=4, lg=4, xl=4, className="mb-3 mb-sm-0"),
                                     dbc.Col([
                                         html.Label("Tipo:", className="form-label mb-2"),
                                         dcc.Dropdown(
@@ -1343,7 +1399,7 @@ def create_relatorios_tab(start_date, end_date):
                                             clearable=False,
                                             className="mb-3"
                                         )
-                                    ], xs=12, sm=6, md=6, lg=6, xl=6)
+                                    ], xs=12, sm=4, md=4, lg=4, xl=4)
                                 ]),
                                 dbc.ButtonGroup([
                                     dbc.Button("💾 Exportar", id="export-report-btn", color="primary", size="sm"),
@@ -1361,9 +1417,9 @@ def create_relatorios_tab(start_date, end_date):
                         html.H5("📊 Gráficos Resumo", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(figure=create_efficiency_chart(), style={'height': '250px'}),
+                        dcc.Graph(figure=create_efficiency_chart(), className='responsive-graph-small'),
                         html.Hr(),
-                        dcc.Graph(figure=create_water_consumption_chart(), style={'height': '250px'})
+                        dcc.Graph(figure=create_water_consumption_chart(), className='responsive-graph-small')
                     ])
                 ])
             ], xs=12, sm=12, md=12, lg=4, xl=4)
@@ -1562,6 +1618,36 @@ def manage_users(n_clicks, username, password, role):
     clear_password = "" if n_clicks and username and password else password
     
     return feedback, users_component, clear_username, clear_password
+
+# Callback para atualizar relatórios quando período for alterado
+@app.callback(
+    Output('tab-content', 'children', allow_duplicate=True),
+    [Input('report-period-dropdown', 'value'),
+     Input('refresh-report-btn', 'n_clicks')],
+    [State('main-tabs', 'active_tab'),
+     State('date-picker', 'start_date'),
+     State('date-picker', 'end_date')],
+    prevent_initial_call=True
+)
+def update_reports_on_period_change(period_days, refresh_clicks, active_tab, start_date, end_date):
+    """Atualiza a aba de relatórios quando o período é alterado"""
+    if active_tab == 'relatorios':
+        from datetime import datetime, timedelta
+        
+        # Determinar período baseado na seleção
+        if period_days == 'custom':
+            # Usar datas do date-picker
+            start_dt = datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=7)
+            end_dt = datetime.fromisoformat(end_date) if end_date else datetime.now()
+        else:
+            # Usar período selecionado
+            end_dt = datetime.now()
+            start_dt = end_dt - timedelta(days=period_days)
+        
+        return create_relatorios_tab(start_dt.isoformat(), end_dt.isoformat())
+    
+    # Se não for a aba de relatórios, não fazer nada
+    raise PreventUpdate
 
 if __name__ == '__main__':
     port = int(os.getenv('DASH_PORT', 8051))

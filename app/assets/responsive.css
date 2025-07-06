@@ -1,4 +1,4 @@
-/* CSS Responsivo Otimizado para Dashboard Industrial */
+/* CSS Responsivo Otimizado para Dashboard Industrial - VERSÃO COMPLETA */
 
 /* Reset e Base */
 * {
@@ -13,6 +13,7 @@ body {
     color: #2c3e50;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 /* Container Principal */
@@ -20,6 +21,18 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 10px;
+}
+
+/* FORÇA RESPONSIVIDADE EM TODOS OS ELEMENTOS */
+.row, .dbc-row {
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+.col, .dbc-col, [class*="col-"] {
+    padding: 5px !important;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 /* Header Responsivo */
@@ -30,6 +43,7 @@ body {
     margin: 15px 0;
     padding: 15px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    width: 100%;
 }
 
 .header-controls {
@@ -38,6 +52,7 @@ body {
     gap: 10px;
     align-items: center;
     justify-content: space-between;
+    width: 100%;
 }
 
 /* Cards e Gráficos - RESPONSIVO OTIMIZADO */
@@ -45,9 +60,13 @@ body {
 .graph-container,
 [id*="graph"],
 [id*="chart"],
-.plotly-graph-div {
+.plotly-graph-div,
+.card,
+.dbc-card {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
+    width: 100% !important;
+    max-width: 100% !important;
     padding: 20px;
     margin: 10px 0;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
@@ -207,6 +226,154 @@ body {
 }
 
 /* RESPONSIVIDADE OTIMIZADA - MOBILE FIRST */
+
+/* FORÇA LAYOUT DE UMA COLUNA EM DISPOSITIVOS MÓVEIS */
+@media (max-width: 768px) {
+    /* Força todas as colunas Bootstrap a ocuparem 100% */
+    .col-1, .col-2, .col-3, .col-4, .col-5, .col-6,
+    .col-7, .col-8, .col-9, .col-10, .col-11, .col-12,
+    .col-sm-1, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6,
+    .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-10, .col-sm-11, .col-sm-12,
+    .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6,
+    .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12,
+    .col-lg-1, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6,
+    .col-lg-7, .col-lg-8, .col-lg-9, .col-lg-10, .col-lg-11, .col-lg-12,
+    .col-xl-1, .col-xl-2, .col-xl-3, .col-xl-4, .col-xl-5, .col-xl-6,
+    .col-xl-7, .col-xl-8, .col-xl-9, .col-xl-10, .col-xl-11, .col-xl-12 {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+        margin-bottom: 15px !important;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+    
+    /* Força todos os cards e gráficos a ocuparem 100% */
+    .card, .dbc-card, .metric-card, .graph-container,
+    [id*="graph"], [id*="chart"], .plotly-graph-div {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 10px 0 !important;
+        padding: 15px !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Força dropdowns e controles a serem responsivos */
+    .Select, .Select-control, .dropdown, .form-control,
+    .dash-dropdown, .dash-dropdown > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 10px !important;
+    }
+    
+    /* Remove float e flex que podem quebrar o layout */
+    .row, .dbc-row {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    
+    .row > *, .dbc-row > * {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 15px !important;
+        float: none !important;
+    }
+    
+    /* Ajustes específicos para abas */
+    .tab-content, #tab-content {
+        width: 100% !important;
+        padding: 10px !important;
+    }
+    
+    /* Botões responsivos */
+    .btn, .dbc-button, button {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Textos menores em mobile */
+    h1 { font-size: 1.5rem !important; }
+    h2 { font-size: 1.3rem !important; }
+    h3 { font-size: 1.2rem !important; }
+    h4 { font-size: 1.1rem !important; }
+    h5 { font-size: 1rem !important; }
+    
+    /* Gráficos com altura menor em mobile */
+    .plotly-graph-div {
+        height: 300px !important;
+        min-height: 250px !important;
+        max-height: 350px !important;
+    }
+    
+    /* Força gráficos Plotly a serem responsivos */
+    .js-plotly-plot, .plotly, .plotly-graph-div > div {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* SVG dos gráficos responsivos */
+    .plotly-graph-div svg {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
+    }
+    
+    /* Container dos gráficos */
+    .main-svg {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Força tabelas a serem responsivas */
+    .dash-table-container, .dash-spreadsheet-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+    
+    /* Ajustes para cards com gráficos */
+    .card-body {
+        padding: 10px !important;
+    }
+    
+    /* Remover margens excessivas */
+    .mb-3, .mb-4, .mb-5 {
+        margin-bottom: 1rem !important;
+    }
+}
+
+/* CLASSES PARA GRÁFICOS RESPONSIVOS */
+.responsive-graph {
+    width: 100% !important;
+    height: 400px;
+}
+
+.responsive-graph-small {
+    width: 100% !important;
+    height: 250px;
+}
+
+@media (max-width: 768px) {
+    .responsive-graph {
+        height: 300px !important;
+    }
+    
+    .responsive-graph-small {
+        height: 200px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .responsive-graph {
+        height: 250px !important;
+    }
+    
+    .responsive-graph-small {
+        height: 180px !important;
+    }
+}
 
 /* Tablets e telas médias */
 @media (max-width: 1024px) {
