@@ -111,6 +111,55 @@ def validate_login(username, password):
 # Carregar usuários na inicialização
 USERS = load_users()
 
+def generate_executive_report(start_date=None, end_date=None):
+    """Gera relatório executivo dinâmico baseado no período selecionado"""
+    if start_date is None:
+        start_date = datetime.now() - timedelta(days=7)
+    if end_date is None:
+        end_date = datetime.now()
+    
+    # Calcular diferença de dias
+    days_diff = (end_date - start_date).days + 1
+    
+    # Simular dados baseados no período
+    period_production = 1250 * days_diff  # 1250 kg por dia
+    period_cycles = 45 * days_diff  # 45 ciclos por dia
+    daily_avg = period_production / days_diff
+    
+    water_period = 8500 * days_diff  # 8500L por dia
+    chemicals_period = 125 * days_diff  # 125 unidades por dia
+    
+    period_alarms = max(1, days_diff // 3)  # Pelo menos 1 alarme a cada 3 dias
+    
+    return {
+        'timestamp': datetime.now().strftime('%d/%m/%Y %H:%M'),
+        'period_days': days_diff,
+        'production_summary': {
+            'period_production': f"{period_production:,.0f}",
+            'period_cycles': period_cycles,
+            'daily_avg': f"{daily_avg:,.0f}",
+            'efficiency': "94.2%"
+        },
+        'consumption_summary': {
+            'water_period': f"{water_period:,.0f}",
+            'water_per_kg': "6.8L/kg",
+            'chemicals_period': f"{chemicals_period:,.0f}",
+            'chemicals_per_kg': "0.1 un/kg"
+        },
+        'alarms_summary': {
+            'period_alarms': period_alarms,
+            'active_alarms': 2,
+            'critical_high': f"{max(1, period_alarms // 4)}/{max(1, period_alarms // 3)}",
+            'avg_resolution': "12 min"
+        },
+        'recommendations': [
+            "Otimizar consumo de água nos horários de pico",
+            "Revisar dosagem de químicos na linha 2",
+            "Implementar manutenção preventiva semanal",
+            "Monitorar temperatura dos equipamentos"
+        ]
+    }
+
 class DatabaseManager:
     """Gerenciador de conexão com PostgreSQL"""
     
@@ -190,35 +239,36 @@ login_layout = dbc.Container([
 # Layout principal do dashboard
 def create_main_layout():
     return dbc.Container([
-        # Header moderno
+        # Header moderno - RESPONSIVO
         dbc.Row([
             dbc.Col([
                 html.Div([
                     html.Div([
                         html.Img(src="/assets/logodstech.png", 
-                                style={'height': '50px', 'width': 'auto', 'margin-right': '15px'}),
+                                style={'height': '40px', 'width': 'auto', 'margin-right': '10px'}),
                         html.Div([
-                            html.H1("DSTech Dashboard", className="text-primary mb-0", 
-                                   style={'font-weight': 'bold'}),
-                            html.P("Sistema de Monitoramento Industrial", className="text-muted mb-0")
+                            html.H2("DSTech Dashboard", className="text-primary mb-0", 
+                                   style={'font-weight': 'bold', 'font-size': 'clamp(1.2rem, 4vw, 2rem)'}),
+                            html.P("Sistema de Monitoramento Industrial", className="text-muted mb-0",
+                                  style={'font-size': 'clamp(0.8rem, 2vw, 1rem)'})
                         ])
-                    ], style={'display': 'flex', 'align-items': 'center'})
+                    ], style={'display': 'flex', 'align-items': 'center', 'flex-wrap': 'wrap'})
                 ])
-            ], width=8),
+            ], xs=12, sm=8, md=8, lg=8, xl=8),
             dbc.Col([
                 html.Div([
                     dbc.Badge(f"Online", color="success", className="me-2"),
                     dbc.Button("Sair", id="logout-button", color="outline-danger", size="sm")
-                ], className="text-end")
-            ], width=4)
-        ], className="mb-4", style={'padding': '1rem 0', 'border-bottom': '2px solid #e9ecef'}),
+                ], className="text-end mt-2 mt-sm-0")
+            ], xs=12, sm=4, md=4, lg=4, xl=4)
+        ], className="mb-3", style={'padding': '0.5rem 0', 'border-bottom': '2px solid #e9ecef'}),
         
-        # Filtros modernos
+        # Filtros modernos - RESPONSIVOS
         dbc.Card([
             dbc.CardBody([
                 dbc.Row([
                     dbc.Col([
-                        dbc.Label("📅 Período de Análise:", className="fw-bold"),
+                        dbc.Label("📅 Período de Análise:", className="fw-bold mb-2"),
                         dcc.DatePickerRange(
                             id='date-picker',
                             start_date=datetime.now() - timedelta(days=7),
@@ -226,35 +276,35 @@ def create_main_layout():
                             display_format='DD/MM/YYYY',
                             style={'width': '100%'}
                         )
-                    ], width=4),
+                    ], xs=12, sm=12, md=4, lg=4, xl=4, className="mb-3 mb-md-0"),
                     dbc.Col([
-                        dbc.Label("🔄 Controles:", className="fw-bold"),
+                        dbc.Label("🔄 Controles:", className="fw-bold mb-2"),
                         html.Div([
-                            dbc.Button("Atualizar Dados", id="refresh-button", 
-                                     color="success", size="sm", className="me-2"),
-                            dbc.Button("🌙 Modo Escuro", id="dark-mode-toggle", 
+                            dbc.Button("Atualizar", id="refresh-button", 
+                                     color="success", size="sm", className="me-2 mb-2 mb-sm-0"),
+                            dbc.Button("🌙 Escuro", id="dark-mode-toggle", 
                                      color="secondary", size="sm")
-                        ])
-                    ], width=4),
+                        ], className="d-flex flex-wrap")
+                    ], xs=12, sm=12, md=4, lg=4, xl=4, className="mb-3 mb-md-0"),
                     dbc.Col([
                         html.Div([
                             html.P("📊 Status do Sistema", className="fw-bold mb-1"),
                             html.Div(id="last-update", className="text-muted small")
                         ])
-                    ], width=4)
+                    ], xs=12, sm=12, md=4, lg=4, xl=4)
                 ])
             ])
-        ], className="mb-4", style={'background': '#f8f9fa'}),
+        ], className="mb-3", style={'background': '#f8f9fa'}),
         
-        # Tabs principais com ícones
+        # Tabs principais com ícones - RESPONSIVAS
         dbc.Tabs([
-            dbc.Tab(label="📊 Resumo Executivo", tab_id="resumo"),
-            dbc.Tab(label="📈 Análise de Tendências", tab_id="tendencias"),
-            dbc.Tab(label="🚨 Monitoramento de Alarmes", tab_id="alarmes"),
-            dbc.Tab(label="🏭 Análise de Produção", tab_id="producao"),
-            dbc.Tab(label="📋 Relatórios Detalhados", tab_id="relatorios"),
-            dbc.Tab(label="⚙️ Configurações", tab_id="config")
-        ], id="main-tabs", active_tab="resumo", className="mb-4"),
+            dbc.Tab(label="📊 Resumo", tab_id="resumo"),
+            dbc.Tab(label="📈 Tendências", tab_id="tendencias"),
+            dbc.Tab(label="🚨 Alarmes", tab_id="alarmes"),
+            dbc.Tab(label="🏭 Produção", tab_id="producao"),
+            dbc.Tab(label="📋 Relatórios", tab_id="relatorios"),
+            dbc.Tab(label="⚙️ Config", tab_id="config")
+        ], id="main-tabs", active_tab="resumo", className="mb-3"),
         
         # Conteúdo das tabs
         html.Div(id="tab-content"),
@@ -617,7 +667,9 @@ def export_report(n_clicks, export_format, period_days):
         import base64
         
         # Gerar relatório com período específico
-        report = generate_executive_report()
+        start_dt = datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=7)
+        end_dt = datetime.fromisoformat(end_date) if end_date else datetime.now()
+        report = generate_executive_report(start_dt, end_dt)
         chemical_details = get_chemical_details()
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
@@ -869,7 +921,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                         ])
                     ])
                 ], style={'border-left': '4px solid #28a745'})
-            ], width=3),
+            ], xs=12, sm=6, md=6, lg=3, xl=3),  # Responsivo: mobile=1col, tablet=2col, desktop=4col
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -880,7 +932,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                         ])
                     ])
                 ], style={'border-left': '4px solid #17a2b8'})
-            ], width=3),
+            ], xs=12, sm=6, md=6, lg=3, xl=3),  # Responsivo: mobile=1col, tablet=2col, desktop=4col
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -891,7 +943,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                         ])
                     ])
                 ], style={'border-left': '4px solid #6f42c1'})
-            ], width=3),
+            ], xs=12, sm=6, md=6, lg=3, xl=3),  # Responsivo: mobile=1col, tablet=2col, desktop=4col
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -902,7 +954,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                         ])
                     ])
                 ], style={'border-left': '4px solid #dc3545'})
-            ], width=3)
+            ], xs=12, sm=6, md=6, lg=3, xl=3)  # Responsivo: mobile=1col, tablet=2col, desktop=4col
         ], className="mb-3"),
         
         # Segunda linha de KPIs
@@ -917,7 +969,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                         ])
                     ])
                 ], style={'border-left': '4px solid #007bff'})
-            ], width=4),
+            ], xs=12, sm=12, md=4, lg=4, xl=4),  # Responsivo: mobile=1col, desktop=3col
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -928,7 +980,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                         ])
                     ])
                 ], style={'border-left': '4px solid #ffc107'})
-            ], width=4),
+            ], xs=12, sm=12, md=4, lg=4, xl=4),  # Responsivo: mobile=1col, desktop=3col
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -939,11 +991,11 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                         ])
                     ])
                 ], style={'border-left': '4px solid #6c757d'})
-            ], width=4)
+            ], xs=12, sm=12, md=4, lg=4, xl=4)  # Responsivo: mobile=1col, desktop=3col
         ], className="mb-4")
     ])
     
-    # Gráficos principais com dados reais
+    # Gráficos principais com dados reais - RESPONSIVOS
     charts_row = dbc.Row([
         dbc.Col([
             dbc.Card([
@@ -954,7 +1006,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                     dcc.Graph(id='efficiency-chart', figure=create_efficiency_chart(), style={'height': '400px'})
                 ])
             ])
-        ], width=6),
+        ], xs=12, sm=12, md=12, lg=6, xl=6),  # Responsivo: mobile=1col, desktop=2col
         dbc.Col([
             dbc.Card([
                 dbc.CardHeader([
@@ -964,7 +1016,7 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
                     dcc.Graph(id='water-chart', figure=create_water_consumption_chart(), style={'height': '400px'})
                 ])
             ])
-        ], width=6)
+        ], xs=12, sm=12, md=12, lg=6, xl=6)  # Responsivo: mobile=1col, desktop=2col
     ], className="mb-4")
     
     # Segunda linha de gráficos
@@ -984,19 +1036,19 @@ def create_resumo_tab(start_date, end_date, client_filter='all'):
     return html.Div([header_section, kpi_cards, charts_row, charts_row2])
 
 def create_alarmes_tab(start_date, end_date):
-    """Aba de monitoramento de alarmes"""
+    """Aba de monitoramento de alarmes - RESPONSIVA"""
     return html.Div([
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader([
-                        html.H5("🔝 Top 10 Alarmes Mais Frequentes", className="mb-0")
+                        html.H5("🔝 Top 10 Alarmes", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(id='top-alarms-chart', figure=create_top_alarms_chart(), style={'height': '500px'})
+                        dcc.Graph(id='top-alarms-chart', figure=create_top_alarms_chart(), style={'height': '400px'})
                     ])
                 ])
-            ], width=6),
+            ], xs=12, sm=12, md=12, lg=6, xl=6, className="mb-3 mb-lg-0"),
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader([
@@ -1006,53 +1058,53 @@ def create_alarmes_tab(start_date, end_date):
                         create_active_alarms_table()
                     ])
                 ])
-            ], width=6)
-        ], className="mb-4"),
+            ], xs=12, sm=12, md=12, lg=6, xl=6)
+        ], className="mb-3"),
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader([
-                        html.H5("📊 Análise de Alarmes por Área", className="mb-0")
+                        html.H5("📊 Análise por Área", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(id='alarm-analysis-chart', figure=create_alarm_analysis_chart(), style={'height': '500px'})
+                        dcc.Graph(id='alarm-analysis-chart', figure=create_alarm_analysis_chart(), style={'height': '400px'})
                     ])
                 ])
-            ], width=12)
+            ], xs=12, sm=12, md=12, lg=12, xl=12)
         ])
     ])
 
 def create_tendencias_tab(start_date, end_date):
-    """Aba de análise de tendências dos sensores"""
+    """Aba de análise de tendências dos sensores - RESPONSIVA"""
     return html.Div([
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader([
-                        html.H5("🌡️ Tendência de Temperatura", className="mb-0")
+                        html.H5("🌡️ Temperatura", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(figure=create_temperature_trend_chart(start_date, end_date), style={'height': '500px'})
+                        dcc.Graph(figure=create_temperature_trend_chart(start_date, end_date), style={'height': '400px'})
                     ])
                 ])
-            ], width=12)
-        ], className="mb-4"),
+            ], xs=12, sm=12, md=12, lg=12, xl=12)
+        ], className="mb-3"),
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader([
-                        html.H5("📊 Análise Completa de Sensores", className="mb-0")
+                        html.H5("📊 Sensores Completo", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(figure=create_sensors_trend_chart(start_date, end_date), style={'height': '600px'})
+                        dcc.Graph(figure=create_sensors_trend_chart(start_date, end_date), style={'height': '500px'})
                     ])
                 ])
-            ], width=12)
+            ], xs=12, sm=12, md=12, lg=12, xl=12)
         ])
     ])
 
 def create_producao_tab(start_date, end_date):
-    """Aba de análise de produção com comparativos avançados"""
+    """Aba de análise de produção com comparativos avançados - RESPONSIVA"""
     
     # Obter insights operacionais
     try:
@@ -1061,44 +1113,40 @@ def create_producao_tab(start_date, end_date):
         insights = []
     
     return html.Div([
-        # Instruções e controles de filtro
+        # Instruções e controles de filtro - RESPONSIVAS
         dbc.Row([
             dbc.Col([
                 dbc.Alert([
-                    html.H5("💡 Como usar a Análise Inteligente:", className="alert-heading mb-2"),
+                    html.H5("💡 Análise Inteligente:", className="alert-heading mb-2"),
                     html.P([
-                        "1. ", html.Strong("Selecione um cliente"), " específico ou mantenha 'Todos' para análise geral"
+                        "1. ", html.Strong("Cliente:"), " Selecione específico ou 'Todos'"
                     ], className="mb-1"),
                     html.P([
-                        "2. ", html.Strong("Escolha o período"), " de análise (recomendado: 30 dias para insights completos)"
+                        "2. ", html.Strong("Período:"), " 30 dias recomendado para insights completos"
                     ], className="mb-1"),
                     html.P([
-                        "3. ", html.Strong("Defina o tipo de análise:"), " Comparativo (padrão), Tendência ou Performance Individual"
-                    ], className="mb-1"),
-                    html.P([
-                        "4. ", html.Strong("A análise será atualizada automaticamente"), " com insights e recomendações"
+                        "3. ", html.Strong("Tipo:"), " Comparativo, Tendência ou Performance"
                     ], className="mb-0")
                 ], color="info", className="mb-3")
-            ], width=12)
+            ], xs=12, sm=12, md=12, lg=12, xl=12)
         ]),
         
-        # Controles de filtro
+        # Controles de filtro - RESPONSIVOS
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader([
-                        html.H5("🎛️ Configurações da Análise", className="mb-0")
+                        html.H5("🎛️ Configurações", className="mb-0")
                     ]),
                     dbc.CardBody([
                         dbc.Row([
                             dbc.Col([
-                                html.Label("👥 Cliente para Análise:", className="form-label fw-bold"),
-                                html.Small("Selecione um cliente específico ou todos", className="text-muted d-block mb-2"),
+                                html.Label("👥 Cliente:", className="form-label fw-bold mb-2"),
                                 dcc.Dropdown(
                                     id='production-client-filter',
                                     options=[
-                                        {'label': '🏢 Todos os Clientes', 'value': 'all'},
-                                        {'label': '🏠 Cliente Interno', 'value': '0'},
+                                        {'label': '🏢 Todos', 'value': 'all'},
+                                        {'label': '🏠 Interno', 'value': '0'},
                                         {'label': '🏪 Cliente A', 'value': '2'},
                                         {'label': '🏬 Cliente B', 'value': '5'},
                                         {'label': '🏭 Cliente C', 'value': '13'},
@@ -1107,41 +1155,39 @@ def create_producao_tab(start_date, end_date):
                                     value='all',
                                     clearable=False
                                 )
-                            ], width=4),
+                            ], xs=12, sm=12, md=4, lg=4, xl=4, className="mb-3 mb-md-0"),
                             dbc.Col([
-                                html.Label("📅 Período de Análise:", className="form-label fw-bold"),
-                                html.Small("Quanto mais dados, melhor a análise", className="text-muted d-block mb-2"),
+                                html.Label("📅 Período:", className="form-label fw-bold mb-2"),
                                 dcc.Dropdown(
                                     id='production-period-filter',
                                     options=[
-                                        {'label': '📊 Últimos 7 dias', 'value': '7'},
-                                        {'label': '📈 Últimos 15 dias', 'value': '15'},
-                                        {'label': '📉 Últimos 30 dias (Recomendado)', 'value': '30'},
-                                        {'label': '📋 Últimos 60 dias', 'value': '60'}
+                                        {'label': '7 dias', 'value': '7'},
+                                        {'label': '15 dias', 'value': '15'},
+                                        {'label': '30 dias', 'value': '30'},
+                                        {'label': '60 dias', 'value': '60'}
                                     ],
                                     value='30',
                                     clearable=False
                                 )
-                            ], width=4),
+                            ], xs=12, sm=12, md=4, lg=4, xl=4, className="mb-3 mb-md-0"),
                             dbc.Col([
-                                html.Label("🔍 Tipo de Análise:", className="form-label fw-bold"),
-                                html.Small("Escolha o foco da análise", className="text-muted d-block mb-2"),
+                                html.Label("🔍 Tipo:", className="form-label fw-bold mb-2"),
                                 dcc.Dropdown(
                                     id='analysis-type-filter',
                                     options=[
-                                        {'label': '📊 Comparativo entre Clientes', 'value': 'comparison'},
-                                        {'label': '📈 Análise de Tendências', 'value': 'trend'},
-                                        {'label': '🎯 Performance Detalhada', 'value': 'individual'}
+                                        {'label': 'Comparativo', 'value': 'comparison'},
+                                        {'label': 'Tendências', 'value': 'trend'},
+                                        {'label': 'Performance', 'value': 'individual'}
                                     ],
                                     value='comparison',
                                     clearable=False
                                 )
-                            ], width=4)
+                            ], xs=12, sm=12, md=4, lg=4, xl=4)
                         ])
                     ])
                 ])
-            ], width=12)
-        ], className="mb-4"),
+            ], xs=12, sm=12, md=12, lg=12, xl=12)
+        ], className="mb-3"),
         
         # Insights Operacionais - DINÂMICOS
         dbc.Row([
@@ -1221,10 +1267,10 @@ def create_producao_tab(start_date, end_date):
     ])
 
 def create_relatorios_tab(start_date, end_date):
-    """Aba de relatórios executivos"""
+    """Aba de relatórios executivos - RESPONSIVA e DINÂMICA"""
     
-    # Gerar relatório executivo
-    report = generate_executive_report()
+    # Gerar relatório executivo com período dinâmico
+    report = generate_executive_report(start_date, end_date)
     
     return html.Div([
         dbc.Row([
@@ -1235,28 +1281,29 @@ def create_relatorios_tab(start_date, end_date):
                     ]),
                     dbc.CardBody([
                         html.Div([
-                            html.H6(f"📅 Gerado em: {report['timestamp']}", className="text-muted mb-3"),
+                            html.H6(f"📅 Período: {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}", className="text-muted mb-3"),
+                            html.H6(f"🕰️ Gerado em: {report['timestamp']}", className="text-muted mb-3"),
                             
                             # Resumo de Produção
                             html.H5("🏭 Resumo de Produção", className="text-primary mb-2"),
                             html.Ul([
-                                html.Li(f"Produção Hoje: {report['production_summary']['daily_production']} kg ({report['production_summary']['daily_cycles']} ciclos)"),
-                                html.Li(f"Produção Semanal: {report['production_summary']['weekly_production']} kg ({report['production_summary']['weekly_cycles']} ciclos)"),
+                                html.Li(f"Produção no Período: {report['production_summary']['period_production']} kg ({report['production_summary']['period_cycles']} ciclos)"),
+                                html.Li(f"Média Diária: {report['production_summary']['daily_avg']} kg/dia"),
                                 html.Li(f"Eficiência Média: {report['production_summary']['efficiency']}")
                             ], className="mb-3"),
                             
                             # Resumo de Consumos
                             html.H5("💧 Resumo de Consumos", className="text-info mb-2"),
                             html.Ul([
-                                html.Li(f"Água Hoje: {report['consumption_summary']['water_today']} L ({report['consumption_summary']['water_per_kg']})"),
-                                html.Li(f"Químicos Hoje: {report['consumption_summary']['chemicals_today']} ({report['consumption_summary']['chemicals_per_kg']})")
+                                html.Li(f"Água no Período: {report['consumption_summary']['water_period']} L ({report['consumption_summary']['water_per_kg']})"),
+                                html.Li(f"Químicos no Período: {report['consumption_summary']['chemicals_period']} ({report['consumption_summary']['chemicals_per_kg']})")
                             ], className="mb-3"),
                             
                             # Resumo de Alarmes
                             html.H5("🚨 Resumo de Alarmes", className="text-warning mb-2"),
                             html.Ul([
+                                html.Li(f"Alarmes no Período: {report['alarms_summary']['period_alarms']}"),
                                 html.Li(f"Alarmes Ativos: {report['alarms_summary']['active_alarms']}"),
-                                html.Li(f"Total do Mês: {report['alarms_summary']['total_month']}"),
                                 html.Li(f"Críticos/Altos: {report['alarms_summary']['critical_high']}"),
                                 html.Li(f"Tempo Médio de Resolução: {report['alarms_summary']['avg_resolution']}")
                             ], className="mb-3"),
@@ -1270,7 +1317,7 @@ def create_relatorios_tab(start_date, end_date):
                             html.Div([
                                 dbc.Row([
                                     dbc.Col([
-                                        html.Label("Formato de Exportação:", className="form-label mb-2"),
+                                        html.Label("Formato:", className="form-label mb-2"),
                                         dcc.Dropdown(
                                             id='export-format-dropdown',
                                             options=[
@@ -1282,45 +1329,44 @@ def create_relatorios_tab(start_date, end_date):
                                             clearable=False,
                                             className="mb-3"
                                         )
-                                    ], width=6),
+                                    ], xs=12, sm=6, md=6, lg=6, xl=6, className="mb-3 mb-sm-0"),
                                     dbc.Col([
-                                        html.Label("Período do Relatório:", className="form-label mb-2"),
+                                        html.Label("Tipo:", className="form-label mb-2"),
                                         dcc.Dropdown(
-                                            id='report-period-dropdown',
+                                            id='report-type-dropdown',
                                             options=[
-                                                {'label': 'Últimos 7 dias', 'value': '7'},
-                                                {'label': 'Últimos 15 dias', 'value': '15'},
-                                                {'label': 'Últimos 30 dias', 'value': '30'},
-                                                {'label': 'Últimos 60 dias', 'value': '60'}
+                                                {'label': 'Executivo', 'value': 'executive'},
+                                                {'label': 'Detalhado', 'value': 'detailed'},
+                                                {'label': 'Resumido', 'value': 'summary'}
                                             ],
-                                            value='30',
+                                            value='executive',
                                             clearable=False,
                                             className="mb-3"
                                         )
-                                    ], width=6)
+                                    ], xs=12, sm=6, md=6, lg=6, xl=6)
                                 ]),
                                 dbc.ButtonGroup([
-                                    dbc.Button("💾 Exportar Relatório", id="export-report-btn", color="primary"),
-                                    dbc.Button("🔄 Atualizar", id="refresh-report-btn", color="secondary", outline=True)
-                                ], className="mb-3"),
+                                    dbc.Button("💾 Exportar", id="export-report-btn", color="primary", size="sm"),
+                                    dbc.Button("🔄 Atualizar", id="refresh-report-btn", color="secondary", outline=True, size="sm")
+                                ], className="mb-3 d-flex flex-wrap"),
                                 dcc.Download(id="download-report")
                             ])
                         ])
                     ])
                 ])
-            ], width=8),
+            ], xs=12, sm=12, md=12, lg=8, xl=8, className="mb-3 mb-lg-0"),
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader([
                         html.H5("📊 Gráficos Resumo", className="mb-0")
                     ]),
                     dbc.CardBody([
-                        dcc.Graph(figure=create_efficiency_chart(), style={'height': '300px'}),
+                        dcc.Graph(figure=create_efficiency_chart(), style={'height': '250px'}),
                         html.Hr(),
-                        dcc.Graph(figure=create_water_consumption_chart(), style={'height': '300px'})
+                        dcc.Graph(figure=create_water_consumption_chart(), style={'height': '250px'})
                     ])
                 ])
-            ], width=4)
+            ], xs=12, sm=12, md=12, lg=4, xl=4)
         ])
     ])
 
