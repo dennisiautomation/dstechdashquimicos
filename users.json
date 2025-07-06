@@ -1,0 +1,17 @@
+{
+  "admin": {
+    "password": "0192023a7bbd73250516f069df18b500",
+    "role": "admin",
+    "created": "2025-07-06T16:48:06.248912"
+  },
+  "operador": {
+    "password": "07d430ce23ec43ba6a631dde9b17fc2d",
+    "role": "operator",
+    "created": "2025-07-06T16:48:06.248920"
+  },
+  "supervisor": {
+    "password": "1425d5d3160aa6bd140605cc75e63ce0",
+    "role": "supervisor",
+    "created": "2025-07-06T16:48:06.248921"
+  }
+}
